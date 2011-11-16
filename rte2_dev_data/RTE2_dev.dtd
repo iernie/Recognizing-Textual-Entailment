@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!ELEMENT entailment-corpus (pair+)>
+
+<!ELEMENT pair (t,h)>
+<!ATTLIST pair
+          id CDATA #REQUIRED
+          entailment (YES|NO) #REQUIRED
+          task (IR|IE|QA|SUM) #REQUIRED >
+	  
+
+<!ELEMENT t (#PCDATA)>
+
+<!ELEMENT h (#PCDATA)>
