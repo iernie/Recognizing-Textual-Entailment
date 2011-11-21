@@ -2,16 +2,19 @@ from __future__ import division
 from xml.etree.ElementTree import ElementTree
 from xml.etree.cElementTree import parse as xmlparse
 
-WORD_MATHCING_THRESHOLD = 0.60
+WORD_MATHCING_THRESHOLD = 0.57
 LEMMA_MATHING_TRESHOLD = 0.635
 BLEU_MATCHING_THRESHOLD = 0.05 # must implement algorithm to find optimal values...
 
 #preprocessed_data = parse_preprocessed_xml('rte2_dev_data/RTE2_dev.preprocessed.xml')
 #data = parse_xml('rte2_dev_data/RTE2_dev.xml')
 
+def clean(word):
+    return word.strip(",. ")
+    
 def word_matching(text, entailment, threshold):
-    words = text.lower().split()
-    hwords = entailment.lower().split()
+    words = [clean(x) for x in text.lower().split()]
+    hwords = [clean(x) for x in entailment.lower().split()]
     intext = 0
     for h in hwords:
         if h in words:
@@ -105,12 +108,14 @@ def parse_preprocessed_xml(fileh):
 
 
 def traverse(tree, function, threshold):
-    correct = 0
-    for a,t,h in tree.values():
-        c = a['entailment'] == 'YES'
-        if function(t,h, threshold) == c:
-            correct += 1
-    print float(correct) / len(tree)
+    print "ranked: no"
+    for i,(a,t,h) in tree.items():
+        #c = a['entailment'] == 'YES'
+        print i,
+        if function(t,h, threshold):
+            print 'YES'
+        else:
+            print 'NO'
 
 def traverse_preprocessed(pairs, function, threshold):
     correct = 0
@@ -127,3 +132,4 @@ if __name__ == '__main__':
     data2 =parse_xml("rte2_dev_data/RTE2_dev.xml")
     traverse_preprocessed(data, lemma_matching, LEMMA_MATHING_TRESHOLD) 
     traverse(data2, bleu, BLEU_MATCHING_THRESHOLD)
+    traverse(data2, word_matching, WORD_MATHCING_THRESHOLD)
