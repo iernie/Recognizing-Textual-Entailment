@@ -14,8 +14,8 @@ def bleu(text, entailment, threshold):
         while i + n <= len(stringlist):
             yield tuple(stringlist[i:i+n])
             i += 1
-    words = text.lower().split()
-    hwords = entailment.lower().split()
+    words = [clean(x) for x in text.lower().split()]
+    hwords = [clean(x) for x in entailment.lower().split()]
     bleus = 0
     for N in range(1,1+len(hwords)):
         wn = list(ngrams(words,N))
