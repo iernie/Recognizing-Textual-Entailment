@@ -8,7 +8,7 @@ def clean(word):
     return word.strip(",. ")
     
 
-def bleu(text, entailment, threshold):
+def bleu(text, entailment):
     def ngrams(stringlist, n):
         i = 0
         while i + n <= len(stringlist):
@@ -23,10 +23,7 @@ def bleu(text, entailment, threshold):
         cm = filter(lambda x: x in wn, hn)
         bleus += len(cm) / len(hn)
     bleus /= len(hwords)
-    if bleus > threshold:
-        return True
-    else:
-        return False
+    return bleus
 
 
 
@@ -75,7 +72,7 @@ def traverse(tree, function, threshold):
     for i,(a,t,h) in tree.items():
         #c = a['entailment'] == 'YES'
         print i,
-        if function(t,h, threshold):
+        if function(t,h) > threshold:
             print 'YES'
         else:
             print 'NO'
