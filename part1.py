@@ -1,15 +1,17 @@
+from __future__ import division
 from xml.etree.ElementTree import ElementTree
 from xml.etree.cElementTree import parse as xmlparse
 
 WORD_MATHCING_THRESHOLD = 0.60
 LEMMA_MATHING_TRESHOLD = 0.635
+BLEU_MATCHING_THRESHOLD = 0.05 # must implement algorithm to find optimal values...
 
 #preprocessed_data = parse_preprocessed_xml('rte2_dev_data/RTE2_dev.preprocessed.xml')
 #data = parse_xml('rte2_dev_data/RTE2_dev.xml')
 
 def word_matching(text, entailment, threshold):
-    words = text.split()
-    hwords = entailment.split()
+    words = text.lower().split()
+    hwords = entailment.lower().split()
     intext = 0
     for h in hwords:
         if h in words:
@@ -31,6 +33,29 @@ def lemma_matching(text, hypothesis, threshold):
         return True
     else:
         return False
+
+def bleu(text, entailment, threshold):
+    def ngrams(stringlist, n):
+        i = 0
+        while i + n <= len(stringlist):
+            yield tuple(stringlist[i:i+n])
+            i += 1
+    words = text.lower().split()
+    hwords = entailment.lower().split()
+    bleus = 0
+    for N in range(1,1+len(hwords)):
+        wn = list(ngrams(words,N))
+        hn = list(ngrams(hwords,N))
+        cm = filter(lambda x: x in wn, hn)
+        bleus += len(cm) / len(hn)
+    bleus /= len(hwords)
+    if bleus > threshold:
+        return True
+    else:
+        return False
+
+
+
 
 def parse_xml(fileh):
     tree = ElementTree()
@@ -99,5 +124,6 @@ def traverse_preprocessed(pairs, function, threshold):
 
 if __name__ == '__main__':
     data =parse_preprocessed_xml("rte2_dev_data/RTE2_dev.preprocessed.xml")
+    data2 =parse_xml("rte2_dev_data/RTE2_dev.xml")
     traverse_preprocessed(data, lemma_matching, LEMMA_MATHING_TRESHOLD) 
-    #traverse(data, word_matching, WORD_MATHCING_THRESHOLD)
+    traverse(data2, bleu, BLEU_MATCHING_THRESHOLD)
