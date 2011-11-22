@@ -178,7 +178,7 @@ def key_root_indices(lld_indices):
     
     kr = dict()
     
-    i = 1
+    i = 0
     for lld in lld_indices:
         kr[lld] = i
         i += 1
@@ -204,46 +204,28 @@ def distance(t1, t2, costs=unit_costs):
         # temporary array for forest distances
         FD = ForestDist()
         
-        for n in range(l1[i], i):
-            FD[ (l1[i],n), None ] = ( FD[ (l1[i],n-1), None ] + 
-                                      costs(T1[n], None) )
+        print "do your thing"
+        
+        for n in range(l1[i], i+1):
+            FD[ (l1[i],n), None ] = FD[ (l1[i],n-1), None ] + costs(T1[n], None)
             
-        for m in range(l2[j], j):
-            FD[ None, (l2[j],m) ] = ( FD[ None, (l2[j],m-1) ] + 
-                                      costs(None, T2[m]) )
+        for m in range(l2[j], j+1):
+            FD[ None, (l2[j],m) ] = FD[ None, (l2[j],m-1) ] + costs(None, T2[m])
             
-        for n in xrange(l1[i], i):
-            for m in xrange(l2[j], j):
+        for n in range(l1[i], i+1):
+            for m in range(l2[j], j+1):
                 if l1[n] == l1[i] and l2[m] == l2[j]:
-                    FD[((l1[i], n), (l2[j], m))] = min(
-                        (
-                            FD[ (l1[i],n-1), (l2[j], m)] +
-                            costs(T1[n], None)
-                        ),
-                        (
-                            FD[ (l1[i],n), (l2[j], m-1)] +
-                            costs(None, T2[m])
-                        ),
-                        (
-                            FD[ (l1[i],n-1), (l2[j], m-1)] +
-                            costs(T1[n], T2[m])
-                        )
+                    FD[ (l1[i], n), (l2[j], m) ] = min(
+                        FD[ (l1[i],n-1), (l2[j], m) ] + costs(T1[n], None),
+                        FD[ (l1[i],n), (l2[j], m-1) ] + costs(None, T2[m]),
+                        FD[ (l1[i],n-1), (l2[j], m-1) ] + costs(T1[n], T2[m])
                     )
-                    TD[n, m] = FD[((l1[i], n), (l2[j], m))]
+                    TD[n, m] = FD[ (l1[i], n), (l2[j], m) ]
                 else:
-                    FD[((l1[i], n), (l2[j], m))] = min(
-                        (
-                            FD[ (l1[i],n-1), (l2[j], m)] +
-                            costs(T1[n], None)
-                        ),
-                        (
-                            FD[ (l1[i],n), (l2[j], m-1)] +
-                            costs(None, T2[m])
-                        ),
-                        (
-                            FD[ (l1[i],n-1), (l2[j], m-1)] +
-                            TD[n, m]
-                        )
+                    FD[ (l1[i], n), (l2[j], m) ] = min(
+                        FD[ (l1[i],n-1), (l2[j], m) ] + costs(T1[n], None),
+                        FD[ (l1[i],n), (l2[j], m-1) ] + costs(None, T2[m]),
+                        FD[ (l1[i],n-1), (l2[j], m-1) ] + TD[n, m]
                     )
                     
         return TD[i, j]
@@ -270,11 +252,11 @@ def distance(t1, t2, costs=unit_costs):
 
     for i in kr1:
         for j in kr2:
-            edit_dist(i-1, j-1)
+            edit_dist(i, j)
             
     print_matrix(T1, T2, TD)
     
-    return TD[i-1,j-1]
+    return TD[i,j]
             
     
         
