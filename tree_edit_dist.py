@@ -178,7 +178,7 @@ def key_root_indices(lld_indices):
     
     kr = dict()
     
-    i = 0
+    i = 0 # is one less for 0 indexed lists
     for lld in lld_indices:
         kr[lld] = i
         i += 1
@@ -203,8 +203,6 @@ def distance(t1, t2, costs=unit_costs):
         """
         # temporary array for forest distances
         FD = ForestDist()
-        
-        print "do your thing"
         
         for n in range(l1[i], i+1):
             FD[ (l1[i],n), None ] = FD[ (l1[i],n-1), None ] + costs(T1[n], None)
@@ -254,7 +252,7 @@ def distance(t1, t2, costs=unit_costs):
         for j in kr2:
             edit_dist(i, j)
             
-    print_matrix(T1, T2, TD)
+    #print_matrix(T1, T2, TD)
     
     return TD[i,j]
             
@@ -274,20 +272,18 @@ if __name__ == '__main__':
     # Cf. Zhang & Shasha: Fig. 4 and Fig. 8
     
     t1 = Node("f",
-             Node("d",
-                  Node("a"),
-                  Node("c",
-                       Node("b"))),
-             Node("e"))
-    
-
+                Node("d",
+                    Node("a"),
+                    Node("c",
+                        Node("b"))),
+                Node("e"))
     
     t2 = Node("f",
-              Node("c",
-                   Node("d",
+                Node("c",
+                    Node("d",
                         Node("a"),
                         Node("b"))),
-              Node("e"))
+                Node("e"))
 
     print "t1 =", t1    
     print "t2 =", t2
