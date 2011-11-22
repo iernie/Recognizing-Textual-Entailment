@@ -46,13 +46,27 @@ def parse_preprocessed_xml(fileh):
 def write(t):
     sys.stdout.write(str(t))
     sys.stdout.write("\t")
-    
+
+def matching_bigrams(text,hypothesis):
+    def ngrams(stringlist, n):
+        i = 0
+        while i + n <= len(stringlist):
+            yield tuple(stringlist[i:i+n])
+            i += 1
+    t = list(ngrams(text,2) )
+    h = list(ngrams(hypothesis, 2))
+    correct = 0
+    for w in h:
+        if w in t:
+            correct += 1
+    return correct / len(h)
+
 def feature_extraction(data,data2):
     write('id')
     write('word')
     write('lemma')
     write('pos')
-    write('bleu')
+    write('bigrams')
     write('entailment')
     print
     print 'd\tc\tc\tc\tc\td'
@@ -64,7 +78,7 @@ def feature_extraction(data,data2):
         write(word_matching(t,h))
         write(lemma_matching(pair.text, pair.hypothesis))
         write(lemma_pos(pair.text, pair.hypothesis))
-        write(bleu(t,h))
+        write(matching_bigrams(t,h))
         write(data2[pair.id][0]['entailment'])
         print
 
