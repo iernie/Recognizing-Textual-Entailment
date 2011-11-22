@@ -1,12 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-#*************************************************************************
-#
-#     This sample implementation is incomplete!
-#     You need to implement the remaining parts yourself.
-#
-#*************************************************************************
     
 """
 Sample implementation of tree edit distance algorithm from 
@@ -128,13 +121,19 @@ def postorder(root_node):
     # Cf.  Zhang & Shasha:p.1249:
     # "Let T[I] be the ith node in the tree according to the left-to-right
     # postordering"
-        
-    raise NotImplementedError()
-    #*************************************************************************
-    #
-    #     Your implementation goes here
-    #
-    #*************************************************************************
+    
+    tree = list()
+    tree.append(root_node)
+    traversed_tree = list()
+    
+    while len(tree) > 0:
+        node = tree.pop()
+        for child in node:
+            tree.append(child)
+        traversed_tree.insert(0, node)
+    
+    return traversed_tree
+    
     
     
 def leftmost_leaf_descendant_indices(node_list):
@@ -146,14 +145,28 @@ def leftmost_leaf_descendant_indices(node_list):
     # "l(i) is the number of the leftmost leaf descendant of the subtree
     # rooted at T[i]. When T[i] is a leaft, l(i)=i."
     
-    raise NotImplementedError()
-    #*************************************************************************
-    #
-    #    Your implementation goes here
-    #
-    #*************************************************************************
-        
-        
+    lld = list()
+    tree = list()
+    
+    for child in node_list:
+        tree.insert(0, child)
+    
+    while len(tree) > 0:
+        node = tree.pop()
+        if node.is_leaf():
+            lld.append(list_index(node_list, node))
+        else:
+            tree.append(node.left_child())
+    
+    return lld
+    
+def list_index(my_list, my_element):
+    i = 0
+    for element in my_list:
+        i += 1
+        if element is my_element:
+            return i
+    
         
 def key_root_indices(lld_indices):
     """
@@ -163,13 +176,14 @@ def key_root_indices(lld_indices):
     # Cf. Zhang & Shasha:p.1251: "LR_keyroots(T) = {k| there exists no k'>k
     # such that l(k)=l(k')}
     
-    raise NotImplementedError()
-    #*************************************************************************
-    #
-    #    Your implementation goes here
-    #
-    #*************************************************************************
+    kr = dict()
     
+    i = 1
+    for lld in lld_indices:
+        kr[lld] = i
+        i += 1
+    
+    return sorted(kr.values())
     
     
 def distance(t1, t2, costs=unit_costs):
@@ -228,7 +242,7 @@ def distance(t1, t2, costs=unit_costs):
             edit_dist(i, j)
             
     print_matrix(T1, T2, TD)
-            
+    
     return TD[i,j]
             
     
@@ -243,8 +257,7 @@ def print_matrix(T1, T2, TD):
     print
 
     
-        
-if __name__ is "__main__":
+if __name__ == '__main__':
     # Cf. Zhang & Shasha: Fig. 4 and Fig. 8
     
     t1 = Node("f",
