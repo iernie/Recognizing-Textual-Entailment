@@ -6,23 +6,36 @@ from nltk.corpus import wordnet as wn
 from collections import defaultdict
 import math
 
+import sys
 #preprocessed_data = parse_preprocessed_xml('rte2_dev_data/RTE2_dev.preprocessed.xml')
 #data = parse_xml('rte2_dev_data/RTE2_dev.xml')
 
 
 def classifier(text,hypothesis):
-    hypothesis = [x for s in hypothesis for x in s.nodes if x.isWord]
-    hypwords = [n.synonyms for n in hypothesis]
+    hypothesis = [x for s in hypothesis for x in s.nodes if x.isWord and x.postag != 'u']
+    textunwrap = [x for s in text for x in s.nodes if x.isWord]
+    #print hyphypernyms
+    #print hypwords
     candidates = {}
     candimdict = defaultdict(list)
+
+    # for i,antonym in enumerate(hypants):
+    #     for word in textunwrap:
+    #         for syn in word.synonyms:
+    #             if syn.path_similarity(antonym.synset) > 0.9:
+    #                 if antonym.name in [x.lemma for x in textunwrap]:
+    #                     continue
+    #                 print antonym, word,syn
+    #                 sys.exit()
     
     for s_num, sentence in enumerate(text):
         for n_num, word in enumerate(sentence.nodes):
             if not word.isWord: continue
+            if word.postag == 'u': continue
             for synset in word.synonyms:
-                for h_num,hynsynsets in enumerate(hypwords):
-                    ps = [(i,synset.path_similarity(x)) for i,x in enumerate(hynsynsets)]
-                    for i,x in ps:
+                for h_num,hypoi in enumerate(hypothesis):
+                    ps = [synset.path_similarity(x) for x in hypoi.synonyms]
+                    for i,x in enumerate(ps):
                         if x and text[s_num].nodes[n_num].postag == hypothesis[h_num].postag:
                             candimdict[h_num].append(x)
 
@@ -37,7 +50,9 @@ def classifier(text,hypothesis):
     #print candimdict
     for k in candimdict:
         synonymmatch -= math.log(max(candimdict[k]))
-    synonymmatch /= len(hypwords)
+    #sys.stderr.write(str(hypothesis))
+    #sys.stderr.write("\n")
+    synonymmatch /= len(hypothesis)
     #print candimdict
     return (abs(notsinhyp-notsintext),synonymmatch,0)
 
@@ -47,7 +62,10 @@ class Pair(object):
         self.tast = etree.attrib['task'].strip()
         self.text = [Sentence(s) for s in etree.iterfind('text/sentence')]
         self.hypothesis = [Sentence(s) for s in etree.iterfind('hypothesis/sentence')]
-        self.entailment = etree.attrib['entailment']
+        if 'entailment' in etree.attrib:
+            self.entailment = etree.attrib['entailment']
+        else:
+            self.entailment = None
 
 class Sentence(object): # list of nodes
     def __init__(self, etree):
@@ -67,6 +85,8 @@ class Node(object):
             self.relation = etree.findtext('relation')
             self.synonyms = self._synonyms()
             self.wnbase = self._wnbase()
+            #self.antonyms = self._antonyms()
+            self.hypernyms = self._hypernyms()
             if self.relation:
                 self.relation = self.relation.strip()
     def _synonyms(self):
@@ -82,7 +102,20 @@ class Node(object):
         elif self.postag == 'a':
             return wn.morphy(self.lemma, wn.ADJ)
         return None
-
+    def __repr__(self):
+        return "Node(%s)"%self.lemma
+    def _antonyms(self):
+        try:
+            return wn.lemma("%s.%s.1.%s"%(self.wnbase,
+                self.postag,
+                self.lemma)).antonyms()
+        except:
+            return []
+    def _hypernyms(self):
+        hypernyms = []
+        for syn in self.synonyms:
+            hypernyms += syn.hypernyms()
+        return hypernyms
 def parse_preprocessed_xml(fileh):
     pair = None
     etree = xmlparse(fileh)
@@ -111,7 +144,8 @@ def traverse_preprocessed_val(pairs, function):
     print "d\td\tc\tc\td"
     print "meta\t\t\t\tclass"
     for pair in pairs:
-        c = pair.entailment == 'YES'
+        #c = pair.entailment == 'YES'
+        #print pair.id
         r = function(pair.text, pair.hypothesis)
         #if r == c:
         #    print 'r',c,r

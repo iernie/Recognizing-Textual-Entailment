@@ -2,7 +2,8 @@ import sys
 import orange, orngTest
 import random
 
-data = orange.ExampleTable("features.tab")
+
+data = orange.ExampleTable("learningdata.tab")
 l = orange.BayesLearner(data)
 #l.nu = 0.1
 #l.svm_type = orange.SVMLearner.Nu_SVC
@@ -71,6 +72,7 @@ if __name__ == '__main__':
         else:
             cross_validation()
     else:
+        data = orange.ExampleTable("learningdata.tab")
         print 'ranked: no'
 
         correct = 0
