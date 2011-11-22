@@ -9,15 +9,12 @@ from xml.etree.cElementTree import parse as xmlparse
 def clean(word):
     return word.strip(",. ")
     
-def lemma_matching(text, hypothesis, threshold):
+def lemma_matching(text, hypothesis):
     lemmastext = [n.lemma for s in text for n in s.nodes if n.isWord]
     lemmashyp = [n.lemma for s in hypothesis for n in s.nodes if n.isWord]
     hypintext = filter(lambda x: x in lemmastext, lemmashyp)
     p = float(len(hypintext)) / len(lemmashyp)
-    if p > threshold:
-        return True
-    else:
-        return False
+    return p
 
 class Pair(object):
     def __init__(self, etree):
@@ -60,7 +57,7 @@ def traverse_preprocessed(pairs, function, threshold):
     print "ranked: no"    
     for pair in pairs:
         print pair.id,
-        if function(pair.text, pair.hypothesis, threshold):
+        if function(pair.text, pair.hypothesis) > threshold:
             print 'YES'
         else:
             print 'NO'

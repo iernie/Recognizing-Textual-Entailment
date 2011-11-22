@@ -2,43 +2,12 @@ from __future__ import division
 from xml.etree.ElementTree import ElementTree
 from xml.etree.cElementTree import parse as xmlparse
 
+from bleu import bleu
+from lemma_pos_matching import lemma_matching as lemma_pos
+from lemma_matcing import lemma_matching
+from word_matching import word_matching,parse_xml
 
-
-def clean(word):
-    return word.strip(",. ")
-    
-
-def bleu(text, entailment):
-    def ngrams(stringlist, n):
-        i = 0
-        while i + n <= len(stringlist):
-            yield tuple(stringlist[i:i+n])
-            i += 1
-    words = [clean(x) for x in text.lower().split()]
-    hwords = [clean(x) for x in entailment.lower().split()]
-    bleus = 0
-    for N in range(1,1+len(hwords)):
-        wn = list(ngrams(words,N))
-        hn = list(ngrams(hwords,N))
-        cm = filter(lambda x: x in wn, hn)
-        bleus += len(cm) / len(hn)
-    bleus /= len(hwords)
-    return bleus
-
-
-
-
-def parse_xml(fileh):
-    tree = ElementTree()
-    tree.parse(fileh)
-    parsed = {}
-    for pair in list(tree.findall('pair')):
-        attrib = pair.attrib
-        t = pair.find('t').text
-        h = pair.find('h').text
-        parsed[attrib['id']] = (attrib,t,h)
-    return parsed
-
+import sys
 
 class Pair(object):
     def __init__(self, etree):
@@ -66,19 +35,43 @@ class Node(object):
             self.relation = etree.findtext('relation')
             if self.relation: self.relations = self.relation.strip()
 
+def parse_preprocessed_xml(fileh):
+    pair = None
+    etree = xmlparse(fileh)
+    pairs = []
+    for pair in etree.iterfind('pair'):
+        pairs.append(Pair(pair))
+    return pairs
 
-def traverse(tree, function, threshold):
-    print "ranked: no"
-    for i,(a,t,h) in tree.items():
-        #c = a['entailment'] == 'YES'
-        print i,
-        if function(t,h) > threshold:
-            print 'YES'
-        else:
-            print 'NO'
+def write(t):
+    sys.stdout.write(str(t))
+    sys.stdout.write("\t")
+    
+def feature_extraction(data,data2):
+    write('id')
+    write('word')
+    write('lemma')
+    write('pos')
+    write('bleu')
+    write('entailment')
+    print
+    print 'd\tc\tc\tc\tc\td'
+    print 'meta\t\t\t\t\tclass'
+    for pair in data: 
+        write(pair.id)
+        t = data2[pair.id][1]
+        h = data2[pair.id][2]
+        write(word_matching(t,h))
+        write(lemma_matching(pair.text, pair.hypothesis))
+        write(lemma_pos(pair.text, pair.hypothesis))
+        write(bleu(t,h))
+        write(data2[pair.id][0]['entailment'])
+        print
+
 
 
 if __name__ == '__main__':
     import sys
-    data = parse_xml(sys.argv[1])
-    traverse(data, bleu, float(sys.argv[2]))
+    data = parse_preprocessed_xml(sys.argv[1])
+    data2 = parse_xml(sys.argv[2])
+    feature_extraction(data,data2)

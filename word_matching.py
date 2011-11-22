@@ -6,7 +6,7 @@ from xml.etree.cElementTree import parse as xmlparse
 def clean(word):
     return word.strip(",. ")
     
-def word_matching(text, entailment, threshold):
+def word_matching(text, entailment):
     words = [clean(x) for x in text.lower().split()]
     hwords = [clean(x) for x in entailment.lower().split()]
     intext = 0
@@ -15,10 +15,7 @@ def word_matching(text, entailment, threshold):
             intext += 1
 
     p = float(intext) / len(hwords)
-    if p > threshold:
-        return True
-    else:
-        return False
+    return p
         
 def parse_xml(fileh):
     tree = ElementTree()
@@ -36,7 +33,7 @@ def traverse(tree, function, threshold):
     for i,(a,t,h) in tree.items():
         #c = a['entailment'] == 'YES'
         print i,
-        if function(t,h, threshold):
+        if function(t,h) > threshold:
             print 'YES'
         else:
             print 'NO'
