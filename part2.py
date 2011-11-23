@@ -3,6 +3,8 @@ from xml.etree.ElementTree import ElementTree
 from xml.etree.cElementTree import parse as xmlparse
 from tree_edit_dist import *
 
+DISTANCE_THRESHOLD = 0.51
+
 class Pair(object):
     def __init__(self, etree):
         self.id = etree.attrib['id'].strip()
@@ -42,7 +44,7 @@ def parse_preprocessed_xml(fileh):
         pairs.append(Pair(pair))
     return pairs
     
-def calculate_tree_edit_dist(pair):
+def calculate_tree_edit_dist(pair, function=unit_costs):
     text_trees = []
     for sentence in pair.text:
         text_trees += make_tree(sentence)
@@ -59,12 +61,19 @@ def calculate_tree_edit_dist(pair):
     for tree in hypothesis_trees:
         H_node.append(tree)
         
-    d = distance(T_node, H_node)
-    print "Distance between T-H pair is", d
+    return distance(T_node, H_node, function)
+    
+def calculate_tree_cost_inserting(pair):
+    number_of_nodes = 0
+    for sentence in pair.hypothesis:
+        number_of_nodes += len(sentence.nodes)
+    
+    return number_of_nodes
     
 def make_tree(sentence):
     hash_map = dict()
     root = []
+    
     for node in sentence.nodes:
         if node.isWord:
             hash_map[node.id] = Node(node.lemma)
@@ -79,11 +88,56 @@ def make_tree(sentence):
     
     return root
                 
+def unit_costs_ent(node1, node2):
+    # insertion cost
+    if node1 is None:
+        return 1
+
+    # deletion cost
+    if node2 is None:
+        return 0
+
+    # substitution cost
+    return 1
 
 
 if __name__ == '__main__':
     data = parse_preprocessed_xml("rte2_dev_data/RTE2_dev.preprocessed.xml")
+    
+    entailment_corrent = 0
+    verdict_corrent = 0
+    
     for pair in data:
-        print pair.id
-        calculate_tree_edit_dist(pair)
+        print "Pair #", pair.id
+        
+        # II-a
+        d = calculate_tree_edit_dist(pair)
+        print "Distance between T-H pair is", d
         print
+        
+        # II-b
+        d = calculate_tree_edit_dist(pair, unit_costs_ent)
+        cost_by_inserting = calculate_tree_cost_inserting(pair)
+        div = (d / cost_by_inserting)
+        
+        print "/// ENTAIL //// ", pair.entailment
+        
+        if div > DISTANCE_THRESHOLD:
+            if pair.entailment == "YES":
+                verdict_corrent += 1
+            print "/// VERDICT /// YES"
+        else:
+            print "/// VERDICT ///  NO"
+        
+        if pair.entailment == "YES":
+            entailment_corrent += 1
+           
+    print
+    print "Correctness ", (verdict_corrent / entailment_corrent)
+        
+        
+        
+        
+        
+        
+        

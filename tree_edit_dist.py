@@ -90,8 +90,6 @@ class ForestDist(dict):
                 forest2 = None
                 
         return dict.__getitem__(self, (forest1, forest2))
-                
-        
         
 def unit_costs(node1, node2):
     """
@@ -101,11 +99,11 @@ def unit_costs(node1, node2):
     # insertion cost
     if node1 is None:
         return 1
-    
+
     # deletion cost
     if node2 is None:
         return 1
-    
+
     # substitution cost
     if node1.label != node2.label:
         return 1
@@ -163,9 +161,9 @@ def leftmost_leaf_descendant_indices(node_list):
 def list_index(my_list, my_element):
     i = 0
     for element in my_list:
-        i += 1
         if element is my_element:
             return i
+        i += 1
     
         
 def key_root_indices(lld_indices):
@@ -204,26 +202,26 @@ def distance(t1, t2, costs=unit_costs):
         # temporary array for forest distances
         FD = ForestDist()
         
-        for n in range(l1[i], i+1):
-            FD[ (l1[i],n), None ] = FD[ (l1[i],n-1), None ] + costs(T1[n], None)
+        for n in xrange(l1[i], i+1):
+            FD[ (l1[i], n), None ] = ( FD[ (l1[i], n-1), None ] + costs(T1[n], None) )
             
-        for m in range(l2[j], j+1):
-            FD[ None, (l2[j],m) ] = FD[ None, (l2[j],m-1) ] + costs(None, T2[m])
+        for m in xrange(l2[j], j+1):
+            FD[ None, (l2[j], m) ] = ( FD[ None, (l2[j], m-1) ] + costs(None, T2[m]) )
             
-        for n in range(l1[i], i+1):
-            for m in range(l2[j], j+1):
-                if l1[n] == l1[i] and l2[m] == l2[j]:
+        for n in xrange(l1[i], i+1):
+            for m in xrange(l2[j], j+1):
+                if l1[i] == l1[n] and l2[j] == l2[m]:
                     FD[ (l1[i], n), (l2[j], m) ] = min(
-                        FD[ (l1[i],n-1), (l2[j], m) ] + costs(T1[n], None),
-                        FD[ (l1[i],n), (l2[j], m-1) ] + costs(None, T2[m]),
-                        FD[ (l1[i],n-1), (l2[j], m-1) ] + costs(T1[n], T2[m])
+                        ( FD[ (l1[i], n-1), (l2[j], m) ] + costs(T1[n], None) ),
+                        ( FD[ (l1[i], n), (l2[j], m-1) ] + costs(None, T2[m]) ),
+                        ( FD[ (l1[i], n-1), (l2[j], m-1) ] + costs(T1[n], T2[m]) )
                     )
                     TD[n, m] = FD[ (l1[i], n), (l2[j], m) ]
                 else:
                     FD[ (l1[i], n), (l2[j], m) ] = min(
-                        FD[ (l1[i],n-1), (l2[j], m) ] + costs(T1[n], None),
-                        FD[ (l1[i],n), (l2[j], m-1) ] + costs(None, T2[m]),
-                        FD[ (l1[i],n-1), (l2[j], m-1) ] + TD[n, m]
+                        ( FD[ (l1[i], n-1), (l2[j], m) ] + costs(T1[n], None) ),
+                        ( FD[ (l1[i], n), (l2[j], m-1) ] + costs(None, T2[m]) ),
+                        ( FD[ (l1[i], l1[n]-1), (l2[j], l2[m]-1) ] + TD[n, m] )
                     )
                     
         return TD[i, j]
@@ -243,10 +241,6 @@ def distance(t1, t2, costs=unit_costs):
     
     # permanent treedist array
     TD = dict()
-    
-    for i in range(len(T1)):
-        for j in range(len(T2)):
-            TD[i, j] = 0
 
     for i in kr1:
         for j in kr2:
@@ -272,18 +266,18 @@ if __name__ == '__main__':
     # Cf. Zhang & Shasha: Fig. 4 and Fig. 8
     
     t1 = Node("f",
-                Node("d",
-                    Node("a"),
-                    Node("c",
-                        Node("b"))),
-                Node("e"))
+                 Node("d",
+                      Node("a"),
+                      Node("c",
+                           Node("b"))),
+                 Node("e"))
     
     t2 = Node("f",
-                Node("c",
-                    Node("d",
+              Node("c",
+                   Node("d",
                         Node("a"),
                         Node("b"))),
-                Node("e"))
+              Node("e"))
 
     print "t1 =", t1    
     print "t2 =", t2
