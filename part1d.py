@@ -34,7 +34,7 @@ def calculate_idf(tree):
     wf = defaultdict(int)
     for i,(a,t,h) in tree.items():
         for w in t.split()+h.split():
-            wf[w] += 1
+            wf[w.strip(",.\"")] += 1
     for key, value in wf.items():
         wf[key] = 1 / value
     return wf
