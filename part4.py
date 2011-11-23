@@ -11,7 +11,7 @@ import sys
 import numpy as np
 #preprocessed_data = parse_preprocessed_xml('rte2_dev_data/RTE2_dev.preprocessed.xml')
 #data = parse_xml('rte2_dev_data/RTE2_dev.xml')
-THRESHOLD = 0.7
+THRESHOLD = 0.5
 
 def word_similar(tn, hn):
     if tn.lemma == hn.lemma:
@@ -33,70 +33,102 @@ def type_r(rs, node):
         if t: return t
     return None
 
+frequently_used = []
+usage = defaultdict(int)
+
 def classifier(pair):
     verbs_hypothesis = [x for s in pair.hypothesis for x in s.nodes if x.postag=='v']
     verbs_text = [x for s in pair.text for x in s.nodes if x.postag=='v']
+    
+    be_hypothesis = [x for s in pair.hypothesis for x in s.nodes if x.postag=='vbe']
+    verbs_hypothesis += be_hypothesis
+    #be_text = [x for s in pair.text for x in s.nodes if x.postag=='vbe']
+    #print be_hypothesis
     
     overlap = defaultdict(list)
     for i,vh in enumerate(verbs_hypothesis):
         for j,vb in enumerate(verbs_text):
             if word_similar(vh,vb):
-                overlap[i] = j
+                overlap[i].append(j)
+            if vh.postag == 'vbe':
+                overlap[i].append(j)
     #print overlap, verbs_hypothesis, verbs_text
+    #print overlap
 
     overlap_txx = 0
     presence_correct = True
     modstatus = True
-    for i,j in overlap.items():
-        objhyp = type_r(['obj','obj1'], verbs_hypothesis[i])
-        subhyp = type_r(['s','subj'], verbs_hypothesis[i]) 
+    for i,cand in overlap.items():
+        for j in cand:
+            objhyp = type_r(['obj','obj1'], verbs_hypothesis[i])
+            subhyp = type_r(['s','subj'], verbs_hypothesis[i]) 
 
-        objtex = type_r(['obj','obj1'], verbs_text[j])
-        subtex = type_r(['s','subj'], verbs_text[j]) 
-
-
-        if subhyp and subtex:
-            if word_similar(subhyp, subtex):
-                overlap_txx += 1
-        if objhyp and objtex:
-            if word_similar(objhyp, objtex):
-                overlap_txx += 1
-
-        if presence_correct:
-            be_h = type_r(['be'], verbs_hypothesis[i])
-            be_t = type_r(['be'], verbs_text[j])
-            if be_h and be_t:
-                if be_h.word != be_t.word:
-                    presence_correct = False
-        
-        if modstatus:
-            mod_h = type_r(['mod'], verbs_hypothesis[i])
-            mod_t = type_r(['mod'], verbs_text[j])
-            if mod_h and mod_t:
-                pcomp_h = type_r(['pcomp-n'], mod_h)
-                pcomp_t = type_r(['pcomp-n'], mod_t)
-                if pcomp_h and pcomp_t:
-                    if not word_similar(pcomp_h, pcomp_t):
-                        modstatus = False
-                #print pcomp_h, pcomp_t
-         
+            objtex = type_r(['obj','obj1'], verbs_text[j])
+            subtex = type_r(['s','subj'], verbs_text[j]) 
 
 
-        #print 'hyp',verbs_hypothesis[i]
-        #print 'text',verbs_text[j]
+            if subhyp and subtex:
+                if word_similar(subhyp, subtex):
+                    overlap_txx += 1
+
+                    if modstatus:
+                        mod_h = type_r(['mod'], verbs_hypothesis[i])
+                        mod_t = type_r(['mod'], verbs_text[j])
+                        if mod_h and mod_t:
+                            pcomp_h = type_r(['pcomp-n'], mod_h)
+                            pcomp_t = type_r(['pcomp-n'], mod_t)
+                            if pcomp_h and pcomp_t:
+                                if not word_similar(pcomp_h, pcomp_t):
+                                    modstatus = False
+                            #print pcomp_h, pcomp_t
+            if objhyp and objtex:
+                if word_similar(objhyp, objtex):
+                    overlap_txx += 1
+                    if modstatus:
+                        mod_h = type_r(['mod'], verbs_hypothesis[i])
+                        mod_t = type_r(['mod'], verbs_text[j])
+                        if mod_h and mod_t:
+                            pcomp_h = type_r(['pcomp-n'], mod_h)
+                            pcomp_t = type_r(['pcomp-n'], mod_t)
+                            if pcomp_h and pcomp_t:
+                                if not word_similar(pcomp_h, pcomp_t):
+                                    modstatus = False
+                            #print pcomp_h, pcomp_t
+
+            if presence_correct:
+                be_h = type_r(['be'], verbs_hypothesis[i])
+                be_t = type_r(['be'], verbs_text[j])
+                if be_h and be_t:
+                    if be_h.word != be_t.word:
+                        presence_correct = False
+            
     #print verbs_hypothesis
     synonym_match = 0
-    hypothesis = [x for s in pair.hypothesis for x in s.nodes if x.isWord]
-    text = [x for s in pair.text for x in s.nodes if x.isWord]
+    hypothesis = [x for s in pair.hypothesis for x in s.nodes if x.isWord and x.lemma not in frequently_used]
+    #print hypothesis, len(hypothesis)
+    text = [x for s in pair.text for x in s.nodes if x.isWord and x.lemma not in frequently_used]
     for h_w in hypothesis:
         for t_w in text:
             if word_similar(h_w, t_w):
                 synonym_match += 1
                 break
             #synonym_match += word_similar(h_w, t_w) 
+    #print frequently_used
     synonym_match = synonym_match / len(hypothesis) 
 
     return (presence_correct,overlap_txx>1, modstatus, synonym_match**2)
+
+def update_use(text):
+    global usage, frequently_used
+    text = [x.lemma for s in text for x in s.nodes if x.isWord]
+    for word in text:
+        usage[word] += 1
+    tmp = sorted(usage.items(), key=lambda x: x[1], reverse=True)
+
+    frequently_used = []
+    for w,dummy in tmp[:20]:
+        frequently_used.append(w)
+
 
 
 class Pair(object):
@@ -104,6 +136,7 @@ class Pair(object):
         self.id = etree.attrib['id'].strip()
         self.tast = etree.attrib['task'].strip()
         self.text = [Sentence(s) for s in etree.iterfind('text/sentence')]
+        update_use(self.text)
         self.hypothesis = [Sentence(s) for s in etree.iterfind('hypothesis/sentence')]
         if 'entailment' in etree.attrib:
             self.entailment = etree.attrib['entailment']
@@ -241,8 +274,8 @@ def traverse_preprocessed_val(pairs, function):
         #c = pair.entailment == 'YES'
         sys.stderr.write("%s\n"% pair.id)
         r = function(pair)
-        #if pair.id == "13":
-        #    break
+        # if pair.id == "190":
+        #     break
         #if r == c:
         #    print 'r',c,r
         #    correct += 1

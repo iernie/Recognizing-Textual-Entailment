@@ -38,37 +38,19 @@ def cross_validation():
         acs.append(accurancy)
     print sum(acs) / float(k) / float(k)
 
-def cross_validation_v():
-    k = 10
-    d = list(data)
-    nps = len(d) / 10
-    acs = []
-    for i in range(k):
-        random.shuffle(d)
-        subsamples = list(split(d,nps))
-        accurancy = 0
-        for j in range(k):
-            validation = subsamples[j]
-            training = []
-            for s in subsamples:
-                if s == validation: continue
-                training += s
-            l = orange.BayesLearner(training)
-            thisa = 0
-            for ex in validation:
-                if ex.getclass() == l(ex):
-                    thisa += 1
-                else:
-                    print ex, l(ex)
-            accurancy += float(thisa) / len(validation)
-        acs.append(accurancy)
-    print sum(acs) / float(k) / float(k)
-
 if __name__ == '__main__':
     import sys
     if 'cross' in sys.argv:
         if 'v' in sys.argv:
-            cross_validation_v()
+            cross_validation()
+            for ex in data:
+                if ex.getclass() != l(ex):
+                    sys.stdout.write('\033[1;41m')
+                    print ex, l(ex),
+                    sys.stdout.write('\033[1;m')
+                    print
+                else:
+                    print ex, l(ex)
         else:
             cross_validation()
     else:
