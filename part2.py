@@ -149,7 +149,6 @@ def calculate_idf(data):
 if __name__ == '__main__':
     data = parse_preprocessed_xml("rte2_dev_data/RTE2_dev.preprocessed.xml")
     
-    entailment_corrent = 0
     verdict_corrent = 0
     
     for pair in data:
@@ -173,14 +172,12 @@ if __name__ == '__main__':
                 verdict_corrent += 1
             print "Verdict YES"
         else:
+            if pair.entailment == "NO":
+                verdict_corrent += 1
             print "Verdict NO"
         
-        if pair.entailment == "YES":
-            entailment_corrent += 1
-        print
-           
     print
-    print "Correctness ", (verdict_corrent / entailment_corrent)
+    print "Correctness ", (verdict_corrent / len(data))
         
         
         
