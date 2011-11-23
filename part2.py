@@ -3,7 +3,7 @@ from xml.etree.ElementTree import ElementTree
 from xml.etree.cElementTree import parse as xmlparse
 from tree_edit_dist import *
 
-DISTANCE_THRESHOLD = 0.50
+DISTANCE_THRESHOLD = 0.565
 IDF = dict()
 
 class Pair(object):
@@ -147,37 +147,41 @@ def calculate_idf(data):
 
 
 if __name__ == '__main__':
-    data = parse_preprocessed_xml("rte2_dev_data/RTE2_dev.preprocessed.xml")
+    import sys
+    data = parse_preprocessed_xml(sys.argv[1])
+    DISTANCE_TRESHOLD = float(sys.argv[2])
     
     verdict_corrent = 0
     
+    print "ranked:no"
     for pair in data:
-        print "Pair #", pair.id
+        #print "Pair #", pair.id
         
         # II-a
         d = calculate_tree_edit_dist(pair)
-        print "Distance between T-H pair is", d
+        #print "Distance between T-H pair is", d
         
         # II-b
         d = calculate_tree_edit_dist(pair, unit_costs_ent)
         cost_by_inserting = calculate_tree_edit_dist_hypothesis(pair.hypothesis)
         div = (float(d) / float(cost_by_inserting))
         
-        print d, cost_by_inserting
+        #print d, cost_by_inserting
         
-        print "Entailment", pair.entailment
-        print "RockNRoll", div
-        if div > DISTANCE_THRESHOLD:
+        #print "Entailment", pair.entailment
+        #print "RockNRoll", div
+        if div < DISTANCE_THRESHOLD:
             if pair.entailment == "YES":
                 verdict_corrent += 1
-            print "Verdict YES"
+            #print "Verdict YES"
+            print pair.id, "YES"
         else:
             if pair.entailment == "NO":
                 verdict_corrent += 1
-            print "Verdict NO"
+            print pair.id, "NO"
         
-    print
-    print "Correctness ", (verdict_corrent / len(data))
+    #print
+    #print "Correctness ", (verdict_corrent / len(data))
         
         
         

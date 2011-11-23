@@ -3,3 +3,4 @@ lemma matching      0.63
 lemma+pos matching  0.63
 bleu                0.0585
 part1d              0.021
+tree edit distance  0.565
