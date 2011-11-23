@@ -15,7 +15,7 @@ class Pair(object):
         self.tast = etree.attrib['task'].strip()
         self.text = [Sentence(s) for s in etree.iterfind('text/sentence')]
         self.hypothesis = [Sentence(s) for s in etree.iterfind('hypothesis/sentence')]
-        self.entailment = etree.attrib['entailment']
+        #self.entailment = etree.attrib['entailment']
 
 class Sentence(object): # list of nodes
     def __init__(self, etree):
