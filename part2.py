@@ -3,7 +3,8 @@ from xml.etree.ElementTree import ElementTree
 from xml.etree.cElementTree import parse as xmlparse
 from tree_edit_dist import *
 
-DISTANCE_THRESHOLD = 0.51
+DISTANCE_THRESHOLD = 0.50
+IDF = dict()
 
 class Pair(object):
     def __init__(self, etree):
@@ -63,12 +64,16 @@ def calculate_tree_edit_dist(pair, function=unit_costs):
         
     return distance(T_node, H_node, function)
     
-def calculate_tree_cost_inserting(pair):
-    number_of_nodes = 0
-    for sentence in pair.hypothesis:
-        number_of_nodes += len(sentence.nodes)
-    
-    return number_of_nodes
+def calculate_tree_edit_dist_hypothesis(hypothesis):
+    hypothesis_trees = []
+    for sentence in hypothesis:
+        hypothesis_trees += make_tree(sentence)
+
+    H_node = Node("H")
+    for tree in hypothesis_trees:
+        H_node.append(tree)
+
+    return distance(Node(""), H_node, unit_costs_ent)
     
 def make_tree(sentence):
     hash_map = dict()
@@ -98,7 +103,47 @@ def unit_costs_ent(node1, node2):
         return 0
 
     # substitution cost
-    return 1
+    if node1.label != node2.label:
+        return 1
+    else:
+        return 0
+        
+def unit_costs_idf(node1, node2):
+    # insertion cost
+    if node1 is None:
+        return 1
+
+    # deletion cost
+    if node2 is None:
+        return 0
+
+    # substitution cost
+    if node1.label != node2.label:
+        return IDF[node1.word]
+    else:
+        return 0
+        
+def calculate_idf(data):
+    
+    IDF = defaultdict(int)
+    
+    for pair in data:
+        for sentence in pair.text:
+            for word in sentence:
+                if word.isWord:
+                    IDF[word.lemma] += 1
+        
+        for sentence in pair.hypothesis:
+            for word in sentence:
+                if word.isWord:
+                    IDF[word.lemma] += 1
+                    
+    for key, value in IDF.items():
+        IDF[key] = 1 / value
+        
+    return IDF
+    
+    
 
 
 if __name__ == '__main__':
@@ -113,24 +158,26 @@ if __name__ == '__main__':
         # II-a
         d = calculate_tree_edit_dist(pair)
         print "Distance between T-H pair is", d
-        print
         
         # II-b
         d = calculate_tree_edit_dist(pair, unit_costs_ent)
-        cost_by_inserting = calculate_tree_cost_inserting(pair)
-        div = (d / cost_by_inserting)
+        cost_by_inserting = calculate_tree_edit_dist_hypothesis(pair.hypothesis)
+        div = (float(d) / float(cost_by_inserting))
         
-        print "/// ENTAIL //// ", pair.entailment
+        print d, cost_by_inserting
         
+        print "Entailment", pair.entailment
+        print "RockNRoll", div
         if div > DISTANCE_THRESHOLD:
             if pair.entailment == "YES":
                 verdict_corrent += 1
-            print "/// VERDICT /// YES"
+            print "Verdict YES"
         else:
-            print "/// VERDICT ///  NO"
+            print "Verdict NO"
         
         if pair.entailment == "YES":
             entailment_corrent += 1
+        print
            
     print
     print "Correctness ", (verdict_corrent / entailment_corrent)
