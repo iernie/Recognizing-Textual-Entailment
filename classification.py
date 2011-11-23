@@ -72,7 +72,7 @@ if __name__ == '__main__':
         else:
             cross_validation()
     else:
-        data = orange.ExampleTable("learningdata.tab")
+        data = orange.ExampleTable(sys.argv[1])
         print 'ranked: no'
 
         correct = 0
