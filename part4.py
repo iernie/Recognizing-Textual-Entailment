@@ -21,6 +21,19 @@ def word_similar(tn, hn):
             for hsyn in hn.synonyms:
                 if syn.path_similarity(hsyn) > THRESHOLD:
                     return True
+    # hypernyms_for_h = list(y for s in hn.synonyms for x in s.hypernym_paths() for y in x)
+    # if hypernyms_for_h:
+    #     hypernyms_for_t = list(y for s in tn.synonyms for x in s.hypernym_paths() for y in x)
+    #     for a in hypernyms_for_h:
+    #         for b in hypernyms_for_t:
+    #             if a.path_similarity(b) > THRESHOLD:
+    #                 #print a,b
+    #                 #print 'tn',tn
+    #                 #print 'hn',hn
+    #                 #sys.exit()
+    #                 return True
+    #     
+
     return False
 
 def type_r(rs, node):
@@ -116,12 +129,14 @@ def classifier(pair):
     #print frequently_used
     synonym_match = synonym_match / len(hypothesis) 
 
-    return (presence_correct,overlap_txx>1, modstatus, synonym_match**2)
+    return (presence_correct,overlap_txx>1, modstatus, synonym_match**2, 0)
 
 def update_use(text):
     global usage, frequently_used
     text = [x.lemma for s in text for x in s.nodes if x.isWord]
     for word in text:
+        if word == 'not': continue
+        if word == 'non': continue
         usage[word] += 1
     tmp = sorted(usage.items(), key=lambda x: x[1], reverse=True)
 
@@ -267,9 +282,9 @@ def traverse_preprocessed_out(pairs, function):
 
 def traverse_preprocessed_val(pairs, function):
     correct = 0
-    print "id\ta\tc\tb\tq\tentailment"
-    print "d\td\td\td\tc\td"
-    print "meta\t\t\t\t\tclass"
+    print "id\ta\tc\tb\tq\tp\tentailment"
+    print "d\td\td\td\tc\td\td"
+    print "meta\t\t\t\t\t\tclass"
     for pair in pairs:
         #c = pair.entailment == 'YES'
         sys.stderr.write("%s\n"% pair.id)
@@ -281,7 +296,7 @@ def traverse_preprocessed_val(pairs, function):
         #    correct += 1
         #else:
         #    print 'f',c,r
-        print "%s\t%s\t%s\t%s\t%f\t%s"%(pair.id,r[0], r[1], r[2],r[3],pair.entailment)
+        print "%s\t%s\t%s\t%s\t%f\t%d\t%s"%(pair.id,r[0], r[1], r[2],r[3],r[4],pair.entailment)
     #print correct / len(pairs)
 
 if __name__ == '__main__':
