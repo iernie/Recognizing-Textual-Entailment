@@ -129,7 +129,7 @@ def classifier(pair):
     #print frequently_used
     synonym_match = synonym_match / len(hypothesis) 
 
-    return (presence_correct,overlap_txx>1, 0, synonym_match**2, 0)
+    return (presence_correct,overlap_txx>1, modstatus, synonym_match**2, 0)
 
 def update_use(text):
     global usage, frequently_used
